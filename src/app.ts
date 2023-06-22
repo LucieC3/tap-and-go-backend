@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
-import express, { Request, Response } from "express";
+import express from "express";
 import { connectToDB } from "./database";
-import { createUserHandler } from "./controllers/UserController";
+import { createUserHandler, loginUser } from "./controllers/UserController";
 import userRoutes from "./routes/userRoutes";
 
 dotenv.config();
@@ -14,6 +14,8 @@ connectToDB().then(() => {
   console.log("Connection succeed");
 
   app.post("/users", createUserHandler);
+  app.post("/register", createUserHandler);
+  app.post("/login", loginUser);
 
   app.use("/api", userRoutes);
 
