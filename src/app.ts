@@ -21,10 +21,6 @@ connectToDB().then(() => {
     })
   );
 
-  app.post("/users", createUserHandler);
-  app.post("/register", createUserHandler);
-  app.post("/login", loginUser);
-
   app.use("/api", userRoutes);
 
   app.listen(3001, () => {
