@@ -52,18 +52,18 @@ export const createUserHandler = async (
 
 const loginUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
     // Vérification des informations d'identification
     const dbConnection: Connection = await getDBConnection();
     const [userRow] = await dbConnection.query(
-      "SELECT * FROM users WHERE username = ?",
-      [username]
+      "SELECT * FROM users WHERE email = ?",
+      [email]
     );
     const user: User = userRow[0];
 
     if (!user) {
-      res.status(401).json({ message: "Nom d'utilisateur incorrect" });
+      res.status(401).json({ message: "Email incorrect" });
       return;
     }
 
