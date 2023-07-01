@@ -4,6 +4,14 @@ import jwt from "jsonwebtoken";
 import { Connection } from "mysql2/promise";
 import { getDBConnection } from "../database";
 import { User } from "../models/User";
+import {
+  getUserFromDatabase,
+  authenticateToken,
+} from "../controllers/ProfileController";
+
+interface CustomRequest extends Request {
+  userId?: number;
+}
 
 const createUser = async (
   connection: Connection,
@@ -21,6 +29,7 @@ const createUser = async (
 
   // Exécution de la requête
   const [result] = await connection.query(query, values);
+  console.log("Result of insertion:", result);
 
   // Récupération de l'ID de l'utilisateur créé
   const userId = (result as any).insertId;
@@ -29,7 +38,7 @@ const createUser = async (
 };
 
 export const createUserHandler = async (
-  req: Request,
+  req: CustomRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -50,7 +59,7 @@ export const createUserHandler = async (
   }
 };
 
-const loginUser = async (req: Request, res: Response): Promise<void> => {
+const loginUser = async (req: CustomRequest, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 
@@ -75,9 +84,13 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Génération du JWT
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET_KEY, {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign(
+      { userId: user.user_id },
+      process.env.JWT_SECRET_KEY,
+      {
+        expiresIn: "1h",
+      }
+    );
 
     res.status(200).json({ token });
   } catch (error) {
@@ -88,4 +101,25 @@ const loginUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export { createUser, loginUser };
+const getUserProfileHandler = async (
+  req: CustomRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.userId;
+
+    const userProfile = await getUserFromDatabase(userId);
+
+    if (!userProfile) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    res.status(200).json({ userProfile });
+  } catch (error) {
+    console.error("Error retrieving user profile:", error);
+    res.status(500).json({ error: "Error retrieving user profile" });
+  }
+};
+
+export { createUser, loginUser, getUserProfileHandler, authenticateToken };
