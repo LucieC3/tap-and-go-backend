@@ -1,7 +1,9 @@
 import axios from "axios";
 import { Connection } from "mysql2/promise";
+import { Request, Response } from "express";
 import { getDBConnection } from "../database";
 import { Station } from "../models/Station";
+import cron from "node-cron";
 
 async function fetchStationsFromAPI(): Promise<Station[]> {
   const apiKey = "0755767fea34480e5e7bd38aad7b7468972dcc7c";
@@ -34,54 +36,48 @@ async function fetchStationsFromAPI(): Promise<Station[]> {
   }
 }
 
-async function insertStationToDatabase(station: Station): Promise<void> {
-  try {
-    const dbConnection: Connection = await getDBConnection();
-
-    const query =
-      "INSERT INTO stations (station_id, station_name, station_address, station_latitude, station_longitude, station_banking, station_status, station_availabilities_bikes, station_availabilities_stands, station_capacity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    const values = [
-      station.stationId,
-      station.name,
-      station.address,
-      station.position.latitude,
-      station.position.longitude,
-      station.banking,
-      station.status,
-      station.totalStands.availabilities.bikes,
-      station.totalStands.availabilities.stands,
-      station.totalStands.capacity,
-    ];
-
-    await dbConnection.query(query, values);
-    console.log("Station inserted successfully");
-  } catch (error) {
-    console.error("Error inserting station to database:", error);
-    throw error;
-  }
-}
-
-async function insertStationsToDatabase(stations: Station[]): Promise<void> {
-  try {
-    for (const station of stations) {
-      await insertStationToDatabase(station);
-    }
-    console.log("Stations inserted successfully");
-  } catch (error) {
-    console.error("Error inserting stations to database:", error);
-    throw error;
-  }
-}
-
-// Fonction principale pour récupérer les stations de l'API et les insérer dans la base de données
-export async function populateStationsTable(): Promise<void> {
+export async function updateStationsTable(): Promise<void> {
   try {
     const stations = await fetchStationsFromAPI();
-    await insertStationsToDatabase(stations);
+    const dbConnection: Connection = await getDBConnection();
+
+    await dbConnection.query(
+      "DELETE FROM favorites WHERE station_id IN (SELECT station_id FROM stations)"
+    );
+    // Supprimer toutes les entrées de la table stations
+    await dbConnection.query("DELETE FROM stations");
+
+    // Insérer les nouvelles données des stations dans la table
+    for (const station of stations) {
+      const query =
+        "INSERT INTO stations (station_id, station_name, station_address, station_latitude, station_longitude, station_banking, station_status, station_availabilities_bikes, station_availabilities_stands, station_capacity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+      const values = [
+        station.stationId,
+        station.name,
+        station.address,
+        station.position.latitude,
+        station.position.longitude,
+        station.banking,
+        station.status,
+        station.totalStands.availabilities.bikes,
+        station.totalStands.availabilities.stands,
+        station.totalStands.capacity,
+      ];
+
+      await dbConnection.query(query, values);
+    }
+
+    console.log("Stations table updated successfully");
   } catch (error) {
-    console.error("Error populating stations table:", error);
+    console.error("Error updating stations table:", error);
   }
 }
 
-// Appeler la fonction pour lancer le processus de peuplement de la table
-populateStationsTable();
+// Tâche planifiée pour mettre à jour la table toutes les 10 minutes
+const updateStationsJob = cron.schedule("*/10 * * * *", updateStationsTable);
+
+// Démarrer la tâche planifiée
+updateStationsJob.start();
+
+// Appeler la fonction pour effectuer la première mise à jour
+updateStationsTable();
