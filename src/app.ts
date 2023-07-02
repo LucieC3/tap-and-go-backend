@@ -1,19 +1,25 @@
 import dotenv from "dotenv";
-import express, { Request, Response } from "express";
+import express from "express";
 import { connectToDB } from "./database";
-import { createUserHandler } from "./controllers/UserController";
+import { createUserHandler, loginUser } from "./controllers/UserController";
 import userRoutes from "./routes/userRoutes";
 
 dotenv.config();
 
 const app = express();
+const cors = require("cors");
 
 app.use(express.json());
 
 connectToDB().then(() => {
   console.log("Connection succeed");
 
-  app.post("/users", createUserHandler);
+  app.use(
+    cors({
+      origin: "http://localhost:3000",
+      credentials: true,
+    })
+  );
 
   app.use("/api", userRoutes);
 
