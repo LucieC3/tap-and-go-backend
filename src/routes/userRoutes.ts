@@ -6,7 +6,11 @@ import {
   authenticateToken,
   logoutUser,
 } from "../controllers/UserController";
-import { FavoriteController } from "../controllers/FavoriteController";
+import {
+  addFavorite,
+  removeFavorite,
+  getAllFavorites,
+} from "../controllers/FavoriteController";
 
 const router = Router();
 
@@ -22,17 +26,13 @@ router.get("/logout", authenticateToken, logoutUser);
 // Route pour obtenir le profil de l'utilisateur
 router.get("/profile", authenticateToken, getUserProfileHandler);
 
-// Route pour obtenir tous les favoris
-router.get("/favorites", authenticateToken, FavoriteController.getAllFavorites);
+// Route pour ajouter une station aux favoris de l'utilisateur
+router.post("/favorites/:stationId", authenticateToken, addFavorite);
 
-// Route pour ajouter un favori
-router.post("/favorites", authenticateToken, FavoriteController.addFavorite);
+// Route pour supprimer une station des favoris de l'utilisateur
+router.delete("/favorites/:favoriteId", authenticateToken, removeFavorite);
 
-// Route pour supprimer un favori
-router.delete(
-  "/favorites/:favoriteId",
-  authenticateToken,
-  FavoriteController.removeFavorite
-);
+// Route pour obtenir les favoris de l'utilisateur
+router.get("/favorites", authenticateToken, getAllFavorites);
 
 export default router;
