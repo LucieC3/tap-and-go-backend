@@ -2,12 +2,13 @@ import dotenv from "dotenv";
 import express from "express";
 import { connectToDB } from "./database";
 import userRoutes from "./routes/userRoutes";
-import { populateStationsTable } from "./controllers/StationController";
+import { updateStationsTable } from "./controllers/StationController";
 
 dotenv.config();
 
 const app = express();
 const cors = require("cors");
+import cron from "node-cron";
 
 app.use(express.json());
 
@@ -15,22 +16,24 @@ connectToDB()
   .then(() => {
     console.log("Connection to the database succeeded");
 
-    // Appeler la fonction pour peupler la table des stations
-    populateStationsTable().then(() => {
-      console.log("Stations table populated");
+    const updateStationsJob = cron.schedule(
+      "*/10 * * * *",
+      updateStationsTable
+    );
 
-      app.use(
-        cors({
-          origin: "http://localhost:3000",
-          credentials: true,
-        })
-      );
+    updateStationsJob.start();
 
-      app.use("/api", userRoutes);
+    app.use(
+      cors({
+        origin: "http://localhost:3000",
+        credentials: true,
+      })
+    );
 
-      app.listen(3001, () => {
-        console.log("Server started on port 3001");
-      });
+    app.use("/api", userRoutes);
+
+    app.listen(3001, () => {
+      console.log("Server started on port 3001");
     });
   })
   .catch((error) => {
