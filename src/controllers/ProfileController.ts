@@ -67,7 +67,8 @@ export function authenticateToken(
   res: Response,
   next: () => void
 ): void {
-  const token = req.headers.authorization?.split(" ")[1];
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
 
   if (!token) {
     res.status(401).json({ error: "Unauthorized" });

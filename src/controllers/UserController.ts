@@ -101,6 +101,14 @@ const loginUser = async (req: CustomRequest, res: Response): Promise<void> => {
   }
 };
 
+const logoutUser = (req: CustomRequest, res: Response): void => {
+  // Déconnexion de l'utilisateur
+  req.userId = undefined;
+
+  // Répondez avec un message de déconnexion réussie
+  res.status(200).json({ message: "Déconnexion réussie" });
+};
+
 const getUserProfileHandler = async (
   req: CustomRequest,
   res: Response
@@ -122,4 +130,10 @@ const getUserProfileHandler = async (
   }
 };
 
-export { createUser, loginUser, getUserProfileHandler, authenticateToken };
+export {
+  createUser,
+  loginUser,
+  logoutUser,
+  getUserProfileHandler,
+  authenticateToken,
+};
