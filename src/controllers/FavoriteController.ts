@@ -30,7 +30,7 @@ export async function addFavorite(
 
     // Ajouter le favori dans la table
     await dbConnection.query(
-      "INSERT INTO favorites (station_id, user_id) VALUES (?, ?)",
+      "INSERT INTO favorites (favorite_id, station_id, user_id) VALUES (NULL, ?, ?)",
       [stationId, userId]
     );
 
