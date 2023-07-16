@@ -11,24 +11,17 @@ async function fetchStationsFromAPI(): Promise<Station[]> {
 
   try {
     const response = await axios.get(apiUrl);
-    console.log(response.data);
     return response.data.map((station: any) => ({
-      stationId: station.number,
-      name: station.name,
-      address: station.address,
-      position: {
-        latitude: station.position.lat,
-        longitude: station.position.lng,
-      },
-      banking: station.banking,
-      status: station.status,
-      totalStands: {
-        availabilities: {
-          bikes: station.available_bikes,
-          stands: station.available_bike_stands,
-        },
-        capacity: station.capacity,
-      },
+      station_id: station.number,
+      station_name: station.name,
+      station_address: station.address,
+      station_latitude: station.position.lat,
+      station_longitude: station.position.lng,
+      station_banking: station.banking,
+      station_status: station.status,
+      station_availabilities_bikes: station.available_bikes,
+      station_availabilities_stands: station.available_bike_stands,
+      station_capacity: station.capacity,
     }));
   } catch (error) {
     console.error("Error fetching stations from API:", error);
@@ -41,27 +34,21 @@ export async function updateStationsTable(): Promise<void> {
     const stations = await fetchStationsFromAPI();
     const dbConnection: Connection = await getDBConnection();
 
-    await dbConnection.query(
-      "DELETE FROM favorites WHERE station_id IN (SELECT station_id FROM stations)"
-    );
-    // Supprimer toutes les entrées de la table stations
-    await dbConnection.query("DELETE FROM stations");
-
-    // Insérer les nouvelles données des stations dans la table
     for (const station of stations) {
       const query =
-        "INSERT INTO stations (station_id, station_name, station_address, station_latitude, station_longitude, station_banking, station_status, station_availabilities_bikes, station_availabilities_stands, station_capacity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        "INSERT INTO stations (station_id, station_name, station_address, station_latitude, station_longitude, station_banking, station_status, station_availabilities_bikes, station_availabilities_stands, station_capacity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE station_name = VALUES(station_name), station_address = VALUES(station_address), station_latitude = VALUES(station_latitude), station_longitude = VALUES(station_longitude), station_banking = VALUES(station_banking), station_status = VALUES(station_status), station_availabilities_bikes = VALUES(station_availabilities_bikes), station_availabilities_stands = VALUES(station_availabilities_stands), station_capacity = VALUES(station_capacity)";
+
       const values = [
-        station.stationId,
-        station.name,
-        station.address,
-        station.position.latitude,
-        station.position.longitude,
-        station.banking,
-        station.status,
-        station.totalStands.availabilities.bikes,
-        station.totalStands.availabilities.stands,
-        station.totalStands.capacity,
+        station.station_id,
+        station.station_name,
+        station.station_address,
+        station.station_latitude,
+        station.station_longitude,
+        station.station_banking,
+        station.station_status,
+        station.station_availabilities_bikes,
+        station.station_availabilities_stands,
+        station.station_capacity,
       ];
 
       await dbConnection.query(query, values);
@@ -70,6 +57,25 @@ export async function updateStationsTable(): Promise<void> {
     console.log("Stations table updated successfully");
   } catch (error) {
     console.error("Error updating stations table:", error);
+  }
+}
+
+export async function getStations(req: Request, res: Response): Promise<void> {
+  try {
+    const stationId = req.params.id as string;
+    const stationIds = stationId.split(",").map(Number);
+
+    const dbConnection: Connection = await getDBConnection();
+
+    const [stations] = await dbConnection.query<Station[]>(
+      `SELECT * FROM stations WHERE station_id IN (?)`,
+      [stationIds]
+    );
+
+    res.status(200).json({ stations });
+  } catch (error) {
+    console.error("Error retrieving stations:", error);
+    res.status(500).json({ error: "Error retrieving stations" });
   }
 }
 

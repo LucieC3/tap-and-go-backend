@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Connection } from "mysql2/promise";
+import { Station } from "../models/Station";
 import { getDBConnection } from "../database";
 import { Favorite } from "../models/Favorite";
 
@@ -81,13 +82,22 @@ export async function getAllFavorites(
   try {
     const userId: number = req.userId;
 
+    console.log("getAllFavorites called");
+
+    console.log("userId", userId);
+
     const dbConnection: Connection = await getDBConnection();
 
-    // Récupérer tous les favoris de l'utilisateur depuis la table
-    const [favorites] = await dbConnection.query<Favorite[]>(
-      "SELECT * FROM favorites WHERE user_id = ?",
+    // Récupérer tous les favoris de l'utilisateur avec le nom de la station
+    const [favorites] = await dbConnection.query<Favorite[] & Station[]>(
+      `SELECT f.favorite_id, f.user_id, f.station_id, s.station_name
+       FROM favorites f
+       JOIN stations s ON f.station_id = s.station_id
+       WHERE f.user_id = ?`,
       [userId]
     );
+
+    console.log("favorites", favorites);
 
     res.status(200).json({ favorites });
   } catch (error) {
