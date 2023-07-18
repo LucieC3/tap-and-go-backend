@@ -6,7 +6,6 @@ describe("Database Connection", () => {
   let connection: Connection;
 
   beforeAll(async () => {
-    // Établir une connexion à la base de données
     connection = await createConnection({
       host: process.env.DB_HOST,
       user: process.env.DB_USER,
@@ -16,7 +15,6 @@ describe("Database Connection", () => {
   });
 
   afterAll(async () => {
-    // Fermer la connexion à la base de données
     await connection.end();
   });
 
