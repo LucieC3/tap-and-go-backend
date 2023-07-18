@@ -11,7 +11,6 @@ interface CustomRequest extends Request {
 export async function getUserFromDatabase(
   userId: number
 ): Promise<User | null> {
-  // Remplacez cet exemple avec votre propre logique pour récupérer les informations de l'utilisateur à partir de la base de données
   const dbConnection: Connection = await getDBConnection();
   const [rows] = await dbConnection.query(
     "SELECT * FROM users WHERE user_id = ?",

@@ -92,6 +92,14 @@ const loginUser = async (req: CustomRequest, res: Response): Promise<void> => {
       }
     );
 
+    // Set the token as a cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 3600000, // 1 hour in milliseconds
+    });
+
     res.status(200).json({ token });
   } catch (error) {
     console.error("Erreur lors de la connexion de l'utilisateur :", error);
@@ -102,10 +110,10 @@ const loginUser = async (req: CustomRequest, res: Response): Promise<void> => {
 };
 
 const logoutUser = (req: CustomRequest, res: Response): void => {
-  // Déconnexion de l'utilisateur
   req.userId = undefined;
 
-  // Répondez avec un message de déconnexion réussie
+  res.clearCookie("token");
+
   res.status(200).json({ message: "Déconnexion réussie" });
 };
 
