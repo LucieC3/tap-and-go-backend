@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import express from "express";
 import { connectToDB } from "./database";
-import userRoutes from "./routes/userRoutes";
+import userRoutes from "./routes/routes";
 import { updateStationsTable } from "./controllers/StationController";
 
 dotenv.config();

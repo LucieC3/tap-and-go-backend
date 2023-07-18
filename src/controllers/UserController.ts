@@ -8,7 +8,6 @@ import {
   getUserFromDatabase,
   authenticateToken,
 } from "../controllers/ProfileController";
-import cookieParser from "cookie-parser";
 
 interface CustomRequest extends Request {
   userId?: number;
